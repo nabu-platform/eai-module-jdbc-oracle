@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>nabu</groupId>
+	<artifactId>eai-module-jdbc-oracle</artifactId>
+	<version>${nabu-eai-module-jdbc-oracle-version}</version>
+	<name>eai-module-jdbc-oracle</name>
+
+	<parent>
+		<groupId>be.nabu</groupId>
+		<artifactId>core</artifactId>
+		<version>1.0-SNAPSHOT</version>
+	</parent>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<!-- The developer dependency is only necessary if you want to edit the 
+			artifacts, in production this dependency can be ignored -->
+		<dependency>
+			<groupId>be.nabu.eai</groupId>
+			<artifactId>eai-developer</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>be.nabu.eai</groupId>
+			<artifactId>eai-repository</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>be.nabu.libs.services</groupId>
+			<artifactId>services-jdbc</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>nabu</groupId>
+			<artifactId>eai-module-jdbc-pool</artifactId>
+			<scope>provided</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.oracle.jdbc</groupId>
+			<artifactId>ojdbc7</artifactId>
+			<version>12.1.0.1</version>
+		</dependency>
+	</dependencies>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>maven.oracle.com</id>
+			<name>oracle-maven-repo</name>
+			<url>https://maven.oracle.com</url>
+			<layout>default</layout>
+			<releases>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</releases>
+		</pluginRepository>
+	</pluginRepositories>
+
+</project>
