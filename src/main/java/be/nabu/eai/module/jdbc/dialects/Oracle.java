@@ -1,4 +1,4 @@
-package be.nabu.eai.module.jdbc.oracle.dialects;
+package be.nabu.eai.module.jdbc.dialects;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -20,7 +20,6 @@ import java.util.TimeZone;
 import java.util.UUID;
 
 import oracle.jdbc.OracleConnection;
-import be.nabu.eai.module.jdbc.dialects.PostgreSQL;
 import be.nabu.eai.repository.EAIRepositoryUtils;
 import be.nabu.libs.converter.ConverterFactory;
 import be.nabu.libs.converter.api.Converter;
@@ -42,6 +41,7 @@ import be.nabu.libs.types.properties.ForeignKeyProperty;
 import be.nabu.libs.types.properties.FormatProperty;
 import be.nabu.libs.types.properties.MaxLengthProperty;
 import be.nabu.libs.types.properties.MinOccursProperty;
+import be.nabu.libs.types.properties.NameProperty;
 import be.nabu.libs.types.properties.UniqueProperty;
 
 public class Oracle implements SQLDialect {
@@ -354,11 +354,19 @@ public class Oracle implements SQLDialect {
 		}
 		return sql;
 	}
+	
+	public static String getName(Value<?>...properties) {
+		String value = ValueUtils.getValue(CollectionNameProperty.getInstance(), properties);
+		if (value == null) {
+			value = ValueUtils.getValue(NameProperty.getInstance(), properties);
+		}
+		return value;
+	}
 
 	@Override
 	public String buildCreateSQL(ComplexType type) {
 		StringBuilder builder = new StringBuilder();
-		builder.append("create table " + EAIRepositoryUtils.uncamelify(PostgreSQL.getName(type.getProperties())) + " (\n");
+		builder.append("create table " + EAIRepositoryUtils.uncamelify(getName(type.getProperties())) + " (\n");
 		boolean first = true;
 		StringBuilder constraints = new StringBuilder();
 		for (Element<?> child : TypeUtils.getAllChildren(type)) {
@@ -549,7 +557,7 @@ public class Oracle implements SQLDialect {
 				}
 			}
 		}
-		return "insert into " + EAIRepositoryUtils.uncamelify(PostgreSQL.getName(content.getType().getProperties())) + " (\n\t" + keyBuilder.toString() + "\n) values (\n\t" + valueBuilder.toString() + "\n);";
+		return "insert into " + EAIRepositoryUtils.uncamelify(getName(content.getType().getProperties())) + " (\n\t" + keyBuilder.toString() + "\n) values (\n\t" + valueBuilder.toString() + "\n);";
 	}
 
 	@Override
