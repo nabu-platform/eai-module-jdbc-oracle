@@ -460,7 +460,7 @@ public class Oracle implements SQLDialect {
 			return "integer";
 		}
 		else if (Long.class.isAssignableFrom(instanceClass)) {
-			return "longinteger";
+			return "number";
 		}
 		else if (BigInteger.class.isAssignableFrom(instanceClass)) {
 			return "number(*, 0)";
