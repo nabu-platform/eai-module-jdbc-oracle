@@ -342,10 +342,10 @@ public class Oracle implements SQLDialect {
 	}
 	
 	@Override
-	public String limit(String sql, Integer offset, Integer limit) {
+	public String limit(String sql, Long offset, Integer limit) {
 		if (limit != null) {
 			if (offset == null) {
-				offset = 0;
+				offset = 0l;
 			}
 			sql = "select results.*, rownum as record_number from (" + sql + ") results where rownum <= " + (offset + limit);
 			if (offset > 0) {
