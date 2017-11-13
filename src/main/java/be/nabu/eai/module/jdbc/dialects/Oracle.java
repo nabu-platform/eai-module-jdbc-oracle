@@ -2,6 +2,7 @@ package be.nabu.eai.module.jdbc.dialects;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.net.URI;
 import java.sql.Array;
@@ -465,6 +466,9 @@ public class Oracle implements SQLDialect {
 		else if (BigInteger.class.isAssignableFrom(instanceClass)) {
 			return "number(*, 0)";
 		}
+		else if (BigDecimal.class.isAssignableFrom(instanceClass)) {
+			return "number(*, 10)";
+		}
 		else if (Double.class.isAssignableFrom(instanceClass)) {
 			return "number";
 		}
@@ -561,7 +565,7 @@ public class Oracle implements SQLDialect {
 	}
 
 	@Override
-	public void setObject(PreparedStatement statement, Element<?> element, int index, Object value) throws SQLException, ServiceException {
+	public void setObject(PreparedStatement statement, Element<?> element, int index, Object value, String sql) throws SQLException, ServiceException {
 		SimpleType<?> type = (SimpleType<?>) element.getType();
 		boolean set = false;
 		// check for clobs
@@ -590,7 +594,7 @@ public class Oracle implements SQLDialect {
 			}
 		}
 		if (!set) {
-			SQLDialect.super.setObject(statement, element, index, value);
+			SQLDialect.super.setObject(statement, element, index, value, sql);
 		}
 	}
 
