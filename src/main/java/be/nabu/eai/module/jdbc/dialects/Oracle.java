@@ -51,6 +51,11 @@ public class Oracle implements SQLDialect {
 	public boolean hasArraySupport(Element<?> element) {
 		return false;
 	}
+	
+	@Override
+	public Integer getDefaultPort() {
+		return 1521;
+	}
 
 	@Override
 	public String getSQLName(Class<?> instanceClass) {
