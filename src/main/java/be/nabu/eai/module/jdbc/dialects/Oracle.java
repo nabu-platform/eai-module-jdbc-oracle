@@ -139,7 +139,7 @@ public class Oracle implements SQLDialect {
 	}
 	
 	public static void main(String...args) throws ParseException {
-		System.out.println(rewriteMerge("insert into delivery_point_calculation (\n" + 
+		String sql = "insert into delivery_point_calculation (\n" + 
 				"	id,\n" + 
 				"	created,\n" + 
 				"	modified,\n" + 
@@ -165,7 +165,9 @@ public class Oracle implements SQLDialect {
 				"	:invoiceId\n" + 
 				")\n" + 
 				"on conflict (insight_delivery_point_id, invoice_id, slice_start_date) do update\n" + 
-				"set modified= excluded.modified, consumption= excluded.consumption, consumption_unit_id= excluded.consumptionUnitId, cost= excluded.cost, currency_id= excluded.currencyId, slice_end_date= excluded.sliceEndDate"));
+				"set modified= excluded.modified, consumption= excluded.consumption, consumption_unit_id= excluded.consumptionUnitId, cost= excluded.cost, currency_id= excluded.currencyId, slice_end_date= excluded.sliceEndDate";
+		System.out.println(sql);
+		System.out.println(rewriteMerge(sql));
 	}
 	/**
 	 * Example:
