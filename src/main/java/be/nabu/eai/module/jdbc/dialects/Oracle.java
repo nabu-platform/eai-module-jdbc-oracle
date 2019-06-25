@@ -180,9 +180,12 @@ public class Oracle implements SQLDialect {
 		List<QueryPart> parsed = QueryParser.getInstance().interpret(QueryParser.getInstance().tokenize(sql), true);
 		int counter = 0;
 		if (!validate(parsed, counter++, "insert") || !validate(parsed, counter++, "into")) {
-			throw new ParseException("Expecint 'insert into'", counter);
+			throw new ParseException("Expecting 'insert into'", counter);
 		}
 		String table = parsed.get(counter++).getToken().getContent();
+		if (table.equals("~")) {
+			table += parsed.get(counter++).getToken().getContent();
+		}
 		System.out.println("Table: " + table);
 		// target table
 		String tableAlias = "tt";
