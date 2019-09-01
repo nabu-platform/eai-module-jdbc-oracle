@@ -14,6 +14,7 @@ import java.sql.Types;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
@@ -37,6 +38,7 @@ import be.nabu.libs.types.api.ComplexType;
 import be.nabu.libs.types.api.DefinedType;
 import be.nabu.libs.types.api.Element;
 import be.nabu.libs.types.api.SimpleType;
+import be.nabu.libs.types.base.Duration;
 import be.nabu.libs.types.properties.CollectionNameProperty;
 import be.nabu.libs.types.properties.ForeignKeyProperty;
 import be.nabu.libs.types.properties.FormatProperty;
@@ -47,6 +49,8 @@ import be.nabu.libs.types.properties.UniqueProperty;
 
 public class Oracle implements SQLDialect {
 
+	private static List<String> reserved = Arrays.asList("state", "audit", "comment", "number", "resource", "size", "uid", "date");
+	
 	@Override
 	public boolean hasArraySupport(Element<?> element) {
 		return false;
@@ -135,13 +139,36 @@ public class Oracle implements SQLDialect {
 				throw new RuntimeException(e);
 			}
 		}
+		return rewriteReserved(sql);
+	}
+	
+	private static String rewriteReserved(String sql) {
+		if (sql != null) {
+			StringBuilder builder = new StringBuilder();
+			boolean inString = false;
+			String[] split = sql.split("\\b");
+			for (int i = 0; i < split.length; i++) {
+				String part = split[i];
+				boolean change = (part.length() - part.replace("'", "").length()) % 2 == 1;
+				if (change) {
+					inString = !inString;
+				}
+				if (inString || i == 0 || split[i - 1].trim().endsWith(":") || (i < split.length - 1 && split[i + 1].trim().startsWith("("))) {
+					builder.append(part);
+				}
+				else {
+					builder.append(restrict(part));
+				}
+			}
+			sql = builder.toString();
+		}
 		return sql;
 	}
 	
 	public static void main(String...args) throws ParseException {
 		String sql = "insert into delivery_point_calculation (\n" + 
 				"	id,\n" + 
-				"	created,\n" + 
+				"	state,\n" + 
 				"	modified,\n" + 
 				"	slice_start_date,\n" + 
 				"	slice_end_date,\n" + 
@@ -154,7 +181,7 @@ public class Oracle implements SQLDialect {
 				") values (\n" + 
 				"	:id,\n" + 
 				"	:created,\n" + 
-				"	:modified,\n" + 
+				"	:state,\n" + 
 				"	:sliceStartDate,\n" + 
 				"	:sliceEndDate,\n" + 
 				"	:consumption,\n" + 
@@ -165,9 +192,10 @@ public class Oracle implements SQLDialect {
 				"	:invoiceId\n" + 
 				")\n" + 
 				"on conflict (insight_delivery_point_id, invoice_id, slice_start_date) do update\n" + 
-				"set modified= excluded.modified, consumption= excluded.consumption, consumption_unit_id= excluded.consumptionUnitId, cost= excluded.cost, currency_id= excluded.currencyId, slice_end_date= excluded.sliceEndDate";
+				"set modified= excluded.resource, consumption= excluded.consumption, consumption_unit_id= excluded.consumptionUnitId, cost= excluded.cost, currency_id= excluded.currencyId, slice_end_date= excluded.sliceEndDate";
 		System.out.println(sql);
-		System.out.println(rewriteMerge(sql));
+//		System.out.println(rewriteMerge(sql));
+		System.out.println(rewriteReserved(sql));
 	}
 	/**
 	 * Example:
@@ -374,10 +402,20 @@ public class Oracle implements SQLDialect {
 		return value;
 	}
 
+	private static String restrict(String columnName) {
+		if (columnName.length() > 30) {
+			columnName = columnName.substring(0, 30);
+		}
+		if (reserved.indexOf(columnName) >= 0) {
+			columnName = "\"" + columnName + "\"";
+		}
+		return columnName;
+	}
+	
 	@Override
-	public String buildCreateSQL(ComplexType type) {
+	public String buildCreateSQL(ComplexType type, boolean compact) {
 		StringBuilder builder = new StringBuilder();
-		builder.append("create table " + EAIRepositoryUtils.uncamelify(getName(type.getProperties())) + " (\n");
+		builder.append("create table " + EAIRepositoryUtils.uncamelify(getName(type.getProperties())) + " (" + (compact ? "" : "\n"));
 		boolean first = true;
 		StringBuilder constraints = new StringBuilder();
 		for (Element<?> child : TypeUtils.getAllChildren(type)) {
@@ -385,11 +423,11 @@ public class Oracle implements SQLDialect {
 				first = false;
 			}
 			else {
-				builder.append(",\n");
+				builder.append("," + (compact ? " " : "\n"));
 			}
 			// if we have a complex type, generate an id field that references it
 			if (child.getType() instanceof ComplexType) {
-				builder.append("\t" + EAIRepositoryUtils.uncamelify(child.getName()) + "_id uuid");
+				builder.append((compact ? "" : "\t") + EAIRepositoryUtils.uncamelify(child.getName()) + "_id varchar(36)");
 			}
 			// differentiate between dates
 			else if (Date.class.isAssignableFrom(((SimpleType<?>) child.getType()).getInstanceClass())) {
@@ -401,10 +439,10 @@ public class Oracle implements SQLDialect {
 				else if (!format.equals("date") && !format.equals("time")) {
 					format = "timestamp";
 				}
-				builder.append("\t" + EAIRepositoryUtils.uncamelify(child.getName())).append(" ").append(format);
+				builder.append((compact ? "" : "\t") + restrict(EAIRepositoryUtils.uncamelify(child.getName()))).append(" ").append(format);
 			}
 			else {
-				builder.append("\t" + EAIRepositoryUtils.uncamelify(child.getName())).append(" ")
+				builder.append((compact ? "" : "\t") + restrict(EAIRepositoryUtils.uncamelify(child.getName()))).append(" ")
 					.append(getPredefinedSQLType(child));
 			}
 			
@@ -413,14 +451,14 @@ public class Oracle implements SQLDialect {
 				String[] split = foreignKey.getValue().split(":");
 				if (split.length == 2) {
 					if (!constraints.toString().isEmpty()) {
-						constraints.append(",\n");
+						constraints.append("," + (compact ? " " : "\n"));
 					}
 					DefinedType resolve = DefinedTypeResolverFactory.getInstance().getResolver().resolve(split[0]);
 					String referencedName = ValueUtils.getValue(CollectionNameProperty.getInstance(), resolve.getProperties());
 					if (referencedName == null) {
 						referencedName = resolve.getName();
 					}
-					constraints.append("\tforeign key (" +  EAIRepositoryUtils.uncamelify(child.getName()) + ") references " + EAIRepositoryUtils.uncamelify(referencedName) + "(" + split[1] + ")");
+					constraints.append((compact ? "" : "\t") + "foreign key (" +  restrict(EAIRepositoryUtils.uncamelify(child.getName())) + ") references " + restrict(EAIRepositoryUtils.uncamelify(referencedName)) + "(" + split[1] + ")");
 				}
 			}
 			
@@ -437,15 +475,15 @@ public class Oracle implements SQLDialect {
 			Value<Boolean> property = child.getProperty(UniqueProperty.getInstance());
 			if (property != null && property.getValue()) {
 				if (!constraints.toString().isEmpty()) {
-					constraints.append(",\n");
+					constraints.append("," + (compact ? " " : "\n"));
 				}
-				constraints.append("\tconstraint " + EAIRepositoryUtils.uncamelify(child.getName()) + "_unique unique (" + child.getName() + ")");
+				constraints.append((compact ? "" : "\t") + "constraint " + EAIRepositoryUtils.uncamelify(child.getName()) + "_unique unique (" + restrict(child.getName()) + ")");
 			}
 		}
 		if (!constraints.toString().isEmpty()) {
-			builder.append(",\n").append(constraints.toString());
+			builder.append("," + (compact ? " " : "\n")).append(constraints.toString());
 		}
-		builder.append("\n);");
+		builder.append((compact ? "" : "\n") + ");");
 		return builder.toString();
 	}
 	
@@ -459,19 +497,19 @@ public class Oracle implements SQLDialect {
 		}
 		return getPredefinedSQLType(instanceClass);
 	}
-	
+	// https://docs.oracle.com/cd/E19501-01/819-3659/gcmaz/
 	private static String getPredefinedSQLType(Class<?> instanceClass) {
-		if (String.class.isAssignableFrom(instanceClass) || char[].class.isAssignableFrom(instanceClass) || URI.class.isAssignableFrom(instanceClass) || instanceClass.isEnum()) {
+		if (String.class.isAssignableFrom(instanceClass) || char[].class.isAssignableFrom(instanceClass) || URI.class.isAssignableFrom(instanceClass) || instanceClass.isEnum() || Duration.class.isAssignableFrom(instanceClass)) {
 			return "varchar2(4000)";
 		}
 		else if (byte[].class.isAssignableFrom(instanceClass)) {
 			return "varbinary";
 		}
 		else if (Integer.class.isAssignableFrom(instanceClass)) {
-			return "integer";
+			return "number(10)";
 		}
 		else if (Long.class.isAssignableFrom(instanceClass)) {
-			return "number";
+			return "number(19)";
 		}
 		else if (BigInteger.class.isAssignableFrom(instanceClass)) {
 			return "number(*, 0)";
@@ -480,13 +518,13 @@ public class Oracle implements SQLDialect {
 			return "number(*, 10)";
 		}
 		else if (Double.class.isAssignableFrom(instanceClass)) {
-			return "number";
+			return "number(19,4)";
 		}
 		else if (Float.class.isAssignableFrom(instanceClass)) {
-			return "number";
+			return "number(19,4)";
 		}
 		else if (Short.class.isAssignableFrom(instanceClass)) {
-			return "shortinteger";
+			return "number(5)";
 		}
 		else if (Boolean.class.isAssignableFrom(instanceClass)) {
 			return "number(1, 0)";
@@ -503,7 +541,7 @@ public class Oracle implements SQLDialect {
 	}
 
 	@Override
-	public String buildInsertSQL(ComplexContent content) {
+	public String buildInsertSQL(ComplexContent content, boolean compact) {
 		StringBuilder keyBuilder = new StringBuilder();
 		StringBuilder valueBuilder = new StringBuilder();
 		SimpleDateFormat timestampFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
@@ -515,10 +553,10 @@ public class Oracle implements SQLDialect {
 			if (element.getType() instanceof SimpleType) {
 				Class<?> instanceClass = ((SimpleType<?>) element.getType()).getInstanceClass();
 				if (!keyBuilder.toString().isEmpty()) {
-					keyBuilder.append(",\n\t");
-					valueBuilder.append(",\n\t");
+					keyBuilder.append("," + (compact ? " " : "\n\t"));
+					valueBuilder.append("," + (compact ? " " : "\n\t"));
 				}
-				keyBuilder.append(EAIRepositoryUtils.uncamelify(element.getName()));
+				keyBuilder.append(restrict(EAIRepositoryUtils.uncamelify(element.getName())));
 				Object value = content.get(element.getName());
 				Integer minOccurs = ValueUtils.getValue(MinOccursProperty.getInstance(), element.getProperties());
 				// if there is no value but it is mandatory, try to generate one
@@ -562,6 +600,13 @@ public class Oracle implements SQLDialect {
 						if (URI.class.isAssignableFrom(instanceClass) || String.class.isAssignableFrom(instanceClass) || UUID.class.isAssignableFrom(instanceClass)) {
 							valueBuilder.append("'");
 							closeQuote = true;
+							// we _have_ to limit the value to 4000 characters, oracle does not allow inserting longer sequences, you have to use parameterized queries for that
+							// as a little twist, we assume it mostly is about stack traces so we keep the end instead of the beginning
+							value = value.toString().replace("'", "''");
+							int length = value.toString().length();
+							if (length >= 4000) {
+								value = value.toString().substring(Math.max(0, length - 4000), length);
+							}
 						}
 						valueBuilder.append(value.toString());
 						if (closeQuote) {
@@ -571,7 +616,7 @@ public class Oracle implements SQLDialect {
 				}
 			}
 		}
-		return "insert into " + EAIRepositoryUtils.uncamelify(getName(content.getType().getProperties())) + " (\n\t" + keyBuilder.toString() + "\n) values (\n\t" + valueBuilder.toString() + "\n);";
+		return "insert into " + EAIRepositoryUtils.uncamelify(getName(content.getType().getProperties())) + " (" + (compact ? "" : "\n\t") + keyBuilder.toString() + ")" + (compact ? "" : "\n") + " values (" + (compact ? "" : "\n\t") + valueBuilder.toString() + (compact ? "" : "\n") + ");";
 	}
 
 	@Override
@@ -604,6 +649,9 @@ public class Oracle implements SQLDialect {
 			}
 		}
 		if (!set) {
+			if (value instanceof Boolean) {
+				value = (Boolean) value ? 1 : 0;
+			}
 			SQLDialect.super.setObject(statement, element, index, value, sql);
 		}
 	}
