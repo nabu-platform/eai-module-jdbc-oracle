@@ -1,0 +1,2 @@
+be.nabu.eai.module.jdbc.dialects.OracleTimestampToDate
+be.nabu.eai.module.jdbc.dialects.OracleTimestampToString
