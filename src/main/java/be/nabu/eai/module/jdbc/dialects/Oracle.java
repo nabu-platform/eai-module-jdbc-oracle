@@ -193,9 +193,34 @@ public class Oracle implements SQLDialect {
 				")\n" + 
 				"on conflict (insight_delivery_point_id, invoice_id, slice_start_date) do update\n" + 
 				"set modified= excluded.resource, consumption= excluded.consumption, consumption_unit_id= excluded.consumptionUnitId, cost= excluded.cost, currency_id= excluded.currencyId, slice_end_date= excluded.sliceEndDate";
-		System.out.println(sql);
-//		System.out.println(rewriteMerge(sql));
-		System.out.println(rewriteReserved(sql));
+		sql = "insert into ~news_letter_subscriptions (\n" + 
+				"         id,\n" + 
+				"         created,\n" + 
+				"         modified,\n" + 
+				"         subscribed,\n" + 
+				"         email,\n" + 
+				"         user_id,\n" + 
+				"         unsubscribe_code\n" + 
+				" ) values (\n" + 
+				"         :id,\n" + 
+				"         :created,\n" + 
+				"         :modified,\n" + 
+				"         :subscribed,\n" + 
+				"         :email,\n" + 
+				"         :userId,\n" + 
+				"         :unsubscribeCode\n" + 
+				" )\n" + 
+				" on conflict(id) do update set\n" + 
+				"         id = excluded.id,\n" + 
+				"         created = excluded.created,\n" + 
+				"         modified = excluded.modified,\n" + 
+				"         subscribed = excluded.subscribed,\n" + 
+				"         email = excluded.email,\n" + 
+				"         user_id = excluded.user_id,\n" + 
+				"         unsubscribe_code = excluded.unsubscribe_code";
+//		System.out.println(sql);
+		System.out.println(rewriteMerge(sql));
+//		System.out.println(rewriteReserved(sql));
 	}
 	/**
 	 * Example:
@@ -312,12 +337,18 @@ public class Oracle implements SQLDialect {
 			if (!content.equals(",")) {
 				updateStatement.append(" ");
 			}
-			// if we are referencing the original table, inject the table alias
-			if (fields.contains(content)) {
-				updateStatement.append(tableAlias).append(".").append(content);	
+			if (!conflicts.contains(content)) {
+				// if we are referencing the original table, inject the table alias
+				if (fields.contains(content)) {
+					updateStatement.append(tableAlias).append(".").append(content);	
+				}
+				else {
+					updateStatement.append(content);
+				}
 			}
 			else {
-				updateStatement.append(content);
+				// skip the assignment, it would be something like "id = excluded.id, " and we ant to skip not only id but also "= excluded.id, "
+				counter += 3;
 			}
 		}
 		StringBuilder result = new StringBuilder();
