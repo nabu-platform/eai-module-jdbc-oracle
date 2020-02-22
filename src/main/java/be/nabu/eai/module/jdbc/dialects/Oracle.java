@@ -42,6 +42,7 @@ import be.nabu.libs.types.base.Duration;
 import be.nabu.libs.types.properties.CollectionNameProperty;
 import be.nabu.libs.types.properties.ForeignKeyProperty;
 import be.nabu.libs.types.properties.FormatProperty;
+import be.nabu.libs.types.properties.GeneratedProperty;
 import be.nabu.libs.types.properties.MaxLengthProperty;
 import be.nabu.libs.types.properties.MinOccursProperty;
 import be.nabu.libs.types.properties.NameProperty;
@@ -446,6 +447,13 @@ public class Oracle implements SQLDialect {
 	@Override
 	public String buildCreateSQL(ComplexType type, boolean compact) {
 		StringBuilder builder = new StringBuilder();
+		for (Element<?> child : TypeUtils.getAllChildren(type)) {
+			Value<Boolean> generatedProperty = child.getProperty(GeneratedProperty.getInstance());
+			if (generatedProperty != null && generatedProperty.getValue() != null && generatedProperty.getValue()) {
+				String seqName = "seq_" + EAIRepositoryUtils.uncamelify(getName(type.getProperties())) + "_" + EAIRepositoryUtils.uncamelify(child.getName()); 
+				builder.append("create sequence ").append(seqName).append(";\n");
+			}
+		}
 		builder.append("create table " + EAIRepositoryUtils.uncamelify(getName(type.getProperties())) + " (" + (compact ? "" : "\n"));
 		boolean first = true;
 		StringBuilder constraints = new StringBuilder();
@@ -493,12 +501,17 @@ public class Oracle implements SQLDialect {
 				}
 			}
 			
+			Value<Boolean> generatedProperty = child.getProperty(GeneratedProperty.getInstance());
+			if (generatedProperty != null && generatedProperty.getValue() != null && generatedProperty.getValue()) {
+				String seqName = "seq_" + EAIRepositoryUtils.uncamelify(getName(type.getProperties())) + "_" + EAIRepositoryUtils.uncamelify(child.getName());
+				builder.append(" default " + seqName + ".nextval");
+			}
 			if (child.getName().equals("id")) {
 				builder.append(" primary key");
 			}
 			else {
 				Integer value = ValueUtils.getValue(MinOccursProperty.getInstance(), child.getProperties());
-				if (value == null || value > 0) {
+				if (value == null || value > 0 || (generatedProperty != null && generatedProperty.getValue() != null && generatedProperty.getValue())) {
 					builder.append(" not null");
 				}
 			}
