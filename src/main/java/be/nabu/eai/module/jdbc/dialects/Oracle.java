@@ -30,9 +30,9 @@ import be.nabu.libs.evaluator.QueryPart;
 import be.nabu.libs.property.ValueUtils;
 import be.nabu.libs.property.api.Value;
 import be.nabu.libs.services.api.ServiceException;
+import be.nabu.libs.services.jdbc.JDBCUtils;
 import be.nabu.libs.services.jdbc.api.SQLDialect;
 import be.nabu.libs.types.DefinedTypeResolverFactory;
-import be.nabu.libs.types.TypeUtils;
 import be.nabu.libs.types.api.ComplexContent;
 import be.nabu.libs.types.api.ComplexType;
 import be.nabu.libs.types.api.DefinedType;
@@ -447,7 +447,7 @@ public class Oracle implements SQLDialect {
 	@Override
 	public String buildCreateSQL(ComplexType type, boolean compact) {
 		StringBuilder builder = new StringBuilder();
-		for (Element<?> child : TypeUtils.getAllChildren(type)) {
+		for (Element<?> child : JDBCUtils.getFieldsInTable(type)) {
 			Value<Boolean> generatedProperty = child.getProperty(GeneratedProperty.getInstance());
 			if (generatedProperty != null && generatedProperty.getValue() != null && generatedProperty.getValue()) {
 				String seqName = "seq_" + EAIRepositoryUtils.uncamelify(getName(type.getProperties())) + "_" + EAIRepositoryUtils.uncamelify(child.getName()); 
@@ -457,7 +457,7 @@ public class Oracle implements SQLDialect {
 		builder.append("create table " + EAIRepositoryUtils.uncamelify(getName(type.getProperties())) + " (" + (compact ? "" : "\n"));
 		boolean first = true;
 		StringBuilder constraints = new StringBuilder();
-		for (Element<?> child : TypeUtils.getAllChildren(type)) {
+		for (Element<?> child : JDBCUtils.getFieldsInTable(type)) {
 			if (first) {
 				first = false;
 			}
@@ -593,7 +593,7 @@ public class Oracle implements SQLDialect {
 		timestampFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 		dateFormatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 		Date date = new Date();
-		for (Element<?> element : TypeUtils.getAllChildren(content.getType())) {
+		for (Element<?> element : JDBCUtils.getFieldsInTable(content.getType())) {
 			if (element.getType() instanceof SimpleType) {
 				Class<?> instanceClass = ((SimpleType<?>) element.getType()).getInstanceClass();
 				if (!keyBuilder.toString().isEmpty()) {
