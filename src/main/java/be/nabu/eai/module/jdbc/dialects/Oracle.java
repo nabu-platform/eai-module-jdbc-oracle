@@ -58,6 +58,11 @@ public class Oracle implements SQLDialect {
 	}
 	
 	@Override
+	public String standardizeTablePattern(String tableName) {
+		return tableName == null ? null : tableName.toUpperCase();
+	}
+
+	@Override
 	public Integer getDefaultPort() {
 		return 1521;
 	}
