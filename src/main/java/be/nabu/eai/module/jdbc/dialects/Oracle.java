@@ -50,7 +50,7 @@ import be.nabu.libs.types.properties.UniqueProperty;
 
 public class Oracle implements SQLDialect {
 
-	private static List<String> reserved = Arrays.asList("state", "audit", "comment", "number", "resource", "size", "uid", "date");
+	private static List<String> reserved = Arrays.asList("state", "audit", "comment", "number", "resource", "size", "uid", "date", "session");
 	
 	@Override
 	public boolean hasArraySupport(Element<?> element) {
@@ -245,10 +245,10 @@ public class Oracle implements SQLDialect {
 		if (table.equals("~")) {
 			table += parsed.get(counter++).getToken().getContent();
 		}
-		System.out.println("Table: " + table);
+//		System.out.println("Table: " + table);
 		// target table
 		String tableAlias = "tt";
-		System.out.println("Alias: " + tableAlias);
+//		System.out.println("Alias: " + tableAlias);
 		if (!validate(parsed, counter++, "(")) {
 			throw new ParseException("Expecting opening '(' to list the fields", counter);
 		}
@@ -264,7 +264,7 @@ public class Oracle implements SQLDialect {
 			}
 			fields.add(parsed.get(counter++).getToken().getContent());
 		}
-		System.out.println("Fields: " + fields);
+//		System.out.println("Fields: " + fields);
 		if (!validate(parsed, counter++, "values")) {
 			throw new ParseException("Expecting fixed string 'values' indicating start of values", counter);
 		}
@@ -309,7 +309,7 @@ public class Oracle implements SQLDialect {
 				}
 			}
 		}
-		System.out.println("Values: " + values);
+//		System.out.println("Values: " + values);
 		if (!validate(parsed, counter++, "on") || !validate(parsed, counter++, "conflict")) {
 			throw new ParseException("Expecting 'on conflict'", counter);
 		}
@@ -332,7 +332,7 @@ public class Oracle implements SQLDialect {
 			}
 			conflicts.add(conflict);
 		}
-		System.out.println("Conflicts: " + conflicts);
+//		System.out.println("Conflicts: " + conflicts);
 		if (!validate(parsed, counter++, "do") || !validate(parsed, counter++, "update") || !validate(parsed, counter++, "set")) {
 			throw new ParseException("Expecting 'do update set'", counter);
 		}
