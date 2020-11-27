@@ -716,6 +716,10 @@ public class Oracle implements SQLDialect {
 		}
 		return SQLDialect.super.getSQLType(element);
 	}
-	
+
+	@Override
+	public List<String> getReservedWords() {
+		return reserved;
+	}
 	
 }
