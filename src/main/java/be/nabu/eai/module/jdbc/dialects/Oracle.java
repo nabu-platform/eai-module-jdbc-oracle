@@ -133,8 +133,8 @@ public class Oracle implements SQLDialect {
 	public String rewrite(String sql, ComplexType input, ComplexType output) {
 		// rewrite booleans to integers
 		// perhaps too broad...
-		sql = sql.replaceAll("\\btrue\\b", "1");
-		sql = sql.replaceAll("\\bfalse\\b", "0");
+		sql = sql.replaceAll("(?<!')\\btrue\\b(?!')", "1");
+		sql = sql.replaceAll("(?<!')\\bfalse\\b(?!')", "0");
 		
 		// we have a merge statement
 		if (sql.matches("(?i)(?s)[\\s]*\\binsert into\\b.*\\bon conflict\\b.*\\bdo update\\b.*")) {
