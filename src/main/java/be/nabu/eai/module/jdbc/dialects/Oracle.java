@@ -459,7 +459,8 @@ public class Oracle implements SQLDialect {
 				builder.append("create sequence ").append(seqName).append(";\n");
 			}
 		}
-		builder.append("create table " + EAIRepositoryUtils.uncamelify(getName(type.getProperties())) + " (" + (compact ? "" : "\n"));
+		String tableName = EAIRepositoryUtils.uncamelify(getName(type.getProperties()));
+		builder.append("create table " + tableName + " (" + (compact ? "" : "\n"));
 		boolean first = true;
 		StringBuilder constraints = new StringBuilder();
 		for (Element<?> child : JDBCUtils.getFieldsInTable(type)) {
@@ -526,7 +527,9 @@ public class Oracle implements SQLDialect {
 				if (!constraints.toString().isEmpty()) {
 					constraints.append("," + (compact ? " " : "\n"));
 				}
-				constraints.append((compact ? "" : "\t") + "constraint " + EAIRepositoryUtils.uncamelify(child.getName()) + "_unique unique (" + restrict(child.getName()) + ")");
+				// the contraint has to be uniquely named in oracle, but still stay under 30 characters
+				// we have renamed "unique" to "u"
+				constraints.append((compact ? "" : "\t") + "constraint " + tableName + "_" + EAIRepositoryUtils.uncamelify(child.getName()) + "_u unique (" + restrict(child.getName()) + ")");
 			}
 		}
 		if (!constraints.toString().isEmpty()) {
