@@ -51,7 +51,7 @@ import be.nabu.libs.types.properties.UniqueProperty;
 
 public class Oracle implements SQLDialect {
 
-	private static List<String> reserved = Arrays.asList("state", "audit", "comment", "number", "resource", "size", "uid", "date", "session");
+	private static List<String> reserved = Arrays.asList("state", "audit", "comment", "number", "resource", "size", "uid", "date", "session", "initial");
 	
 	@Override
 	public boolean hasArraySupport(Element<?> element) {
@@ -77,6 +77,16 @@ public class Oracle implements SQLDialect {
 	private String getArraySQLName(Element<?> element) {
 		String sqlName = SQLDialect.super.getSQLName(((SimpleType<?>) element.getType()).getInstanceClass());
 		return sqlName == null || !sqlName.equals("varchar") ? sqlName : "varchar2(255)";
+	}
+	
+	@Override
+	public String buildAlterNillable(ComplexType type, String element, boolean nillable) {
+		String tableName = getName(type.getProperties()).replaceAll("([A-Z]+)", "_$1").replaceFirst("^_", "");
+		tableName = quoteReserved(tableName.toLowerCase());
+		String columnName = element.replaceAll("([A-Z]+)", "_$1").replaceFirst("^_", "").toLowerCase();
+		columnName = quoteReserved(columnName);
+		// this is the default syntax that works on postgres & h2 and likely some others...
+		return "alter table " + tableName + " modify " + columnName + " " + (nillable ? "null" : "not null") + ";";
 	}
 	
 	@Override
