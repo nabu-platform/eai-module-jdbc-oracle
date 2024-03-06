@@ -532,7 +532,7 @@ public class Oracle implements SQLDialect {
 					builder.append(" not null");
 					// for mandatory boolean values, we automatically insert "default false", this makes it easier to add mandatory boolean later on with alter scripts
 					if (Boolean.class.isAssignableFrom(((SimpleType<?>) child.getType()).getInstanceClass())) {
-						builder.append(" default false");
+						builder.append(" default 0");
 					}
 				}
 			}
