@@ -1,19 +1,14 @@
-<?xml version="1.0"?>
-<project
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>nabu</groupId>
 	<artifactId>eai-module-jdbc-oracle</artifactId>
-	<version>${nabu-eai-module-jdbc-oracle-version}</version>
+	<version>1.6-SNAPSHOT</version>
 	<name>eai-module-jdbc-oracle</name>
-
 	<parent>
 		<groupId>be.nabu</groupId>
 		<artifactId>core</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
-
 	<build>
 		<plugins>
 			<plugin>
@@ -26,10 +21,7 @@
 			</plugin>
 		</plugins>
 	</build>
-
 	<dependencies>
-		<!-- The developer dependency is only necessary if you want to edit the 
-			artifacts, in production this dependency can be ignored -->
 		<dependency>
 			<groupId>be.nabu.eai</groupId>
 			<artifactId>eai-developer</artifactId>
@@ -50,15 +42,12 @@
 			<artifactId>eai-module-jdbc-pool</artifactId>
 			<scope>provided</scope>
 		</dependency>
-
-		<!-- https://mvnrepository.com/artifact/com.oracle.database.jdbc/ojdbc8 -->
 		<dependency>
-		    <groupId>com.oracle.database.jdbc</groupId>
-		    <artifactId>ojdbc8</artifactId>
-		    <version>23.3.0.23.09</version>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc8</artifactId>
+			<version>23.3.0.23.09</version>
 		</dependency>
 	</dependencies>
-
 	<pluginRepositories>
 		<pluginRepository>
 			<id>maven.oracle.com</id>
@@ -71,5 +60,4 @@
 			</releases>
 		</pluginRepository>
 	</pluginRepositories>
-
 </project>
