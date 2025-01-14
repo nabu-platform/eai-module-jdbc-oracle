@@ -69,6 +69,7 @@ import be.nabu.libs.types.properties.UniqueProperty;
 public class Oracle implements SQLDialect {
 
 	private static List<String> reserved = Arrays.asList("state", "audit", "comment", "number", "resource", "size", "uid", "date", "session", "initial");
+	private static final Boolean TRUNCATE_FIELDS = Boolean.parseBoolean(System.getProperty("oracle.truncateFields", "false"));
 	
 	@Override
 	public boolean hasArraySupport(Element<?> element) {
@@ -468,7 +469,7 @@ public class Oracle implements SQLDialect {
 	}
 
 	private static String restrict(String columnName) {
-		if (columnName.length() > 30) {
+		if (TRUNCATE_FIELDS && columnName.length() > 30) {
 			columnName = columnName.substring(0, 30);
 		}
 		if (reserved.indexOf(columnName) >= 0) {
