@@ -478,6 +478,14 @@ public class Oracle implements SQLDialect {
 		return columnName;
 	}
 	
+	// has to be "drop column", not just "drop"!
+	@Override
+	public String buildDropSQL(ComplexType type, String element) {
+		String name = getName(type.getProperties()).replaceAll("([A-Z]+)", "_$1").replaceFirst("^_", "");
+		name = quoteReserved(name.toLowerCase());
+		return "alter table " + name + " drop column " + element.replaceAll("([A-Z]+)", "_$1").replaceFirst("^_", "") + ";";
+	}
+	
 	@Override
 	public String buildCreateSQL(ComplexType type, boolean compact) {
 		StringBuilder builder = new StringBuilder();
