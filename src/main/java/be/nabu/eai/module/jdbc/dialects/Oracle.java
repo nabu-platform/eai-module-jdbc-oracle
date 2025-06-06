@@ -600,11 +600,19 @@ public class Oracle implements SQLDialect {
 				return "clob";
 			}
 		}
-		return getPredefinedSQLType(instanceClass);
+		return getPredefinedSQLType(instanceClass, ValueUtils.getValue(MaxLengthProperty.getInstance(), element.getProperties()));
 	}
 	// https://docs.oracle.com/cd/E19501-01/819-3659/gcmaz/
-	private static String getPredefinedSQLType(Class<?> instanceClass) {
+	private static String getPredefinedSQLType(Class<?> instanceClass, Integer maxLength) {
 		if (String.class.isAssignableFrom(instanceClass) || char[].class.isAssignableFrom(instanceClass) || URI.class.isAssignableFrom(instanceClass) || instanceClass.isEnum() || Duration.class.isAssignableFrom(instanceClass)) {
+			if (maxLength != null) {
+				if (maxLength <= 4000) {
+					return "varchar2(" + maxLength + ")";
+				}
+				else {
+					return "clob";
+				}
+			}
 			return "varchar2(4000)";
 		}
 		else if (byte[].class.isAssignableFrom(instanceClass)) {
